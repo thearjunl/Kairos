@@ -1,0 +1,10 @@
+# Kairos Backend Dependencies
+fastapi
+uvicorn[standard]
+sqlalchemy
+aiosqlite
+aiofiles
+google-generativeai
+python-dotenv
+httpx
+pydantic
