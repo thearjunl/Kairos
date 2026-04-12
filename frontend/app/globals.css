@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --s-bg: #080c10;
+  --s-surface: #0d1117;
+  --s-card: #111820;
+  --s-border: #1e2d3d;
+  --s-cyan: #00d4ff;
+  --s-green: #00ff87;
+  --s-amber: #ffaa00;
+  --s-red: #ff3333;
+  --s-purple: #9d6eff;
+  --s-text: #e0eaf4;
+  --s-muted: #5a7a94;
+  --s-brand: "KAIROS";
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--s-bg);
+  color: var(--s-text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─── Subtle Cyan Grid Overlay ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ─── Scrollbar Styling ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--s-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--s-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--s-muted);
+}
+
+/* ─── Utility Classes ─── */
+@layer components {
+  .sentinel-card {
+    @apply bg-s-card border border-s-border rounded-lg;
+    backdrop-filter: blur(4px);
+  }
+
+  .sentinel-glow {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.05),
+                0 0 60px rgba(0, 212, 255, 0.02);
+  }
+
+  .status-pill {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider;
+  }
+
+  .status-success {
+    @apply bg-s-green/10 text-s-green border border-s-green/20;
+  }
+
+  .status-degraded {
+    @apply bg-s-amber/10 text-s-amber border border-s-amber/20;
+  }
+
+  .status-fail {
+    @apply bg-s-red/10 text-s-red border border-s-red/20;
+  }
+
+  .metric-value {
+    @apply text-3xl font-bold font-mono tracking-tight;
+  }
+
+  .section-header {
+    @apply text-sm font-display font-semibold uppercase tracking-[0.2em] text-s-muted;
+  }
+}
+
+/* ─── Pulse animation for danger state ─── */
+@keyframes danger-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 51, 51, 0);
+  }
+}
+
+.danger-pulse {
+  animation: danger-pulse 1.5s ease-in-out infinite;
+}
+
+/* ─── Ring gauge animation ─── */
+.ring-transition {
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+
+/* ─── Feed row animation ─── */
+.feed-row-enter {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  0% {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
