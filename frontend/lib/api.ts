@@ -1,9 +1,10 @@
-// ─── API Client & SSE Hook for FinOps Sentinel ─────────────────────────────
+// ─── API Client & SSE Hook for Kairos ───────────────────────────────────────
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_KEY = process.env.NEXT_PUBLIC_API_SECRET_KEY || "";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export interface Transaction {
@@ -55,6 +56,17 @@ export interface SecurityEvent {
   cloud_region: string;
   message: string;
   timestamp: string;
+}
+
+// ─── Auth Headers ───────────────────────────────────────────────────────────
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (API_KEY) {
+    headers["X-API-Key"] = API_KEY;
+  }
+  return headers;
 }
 
 // ─── SSE Hook ───────────────────────────────────────────────────────────────
@@ -142,13 +154,16 @@ export async function triggerAnomaly(
 ): Promise<void> {
   await fetch(`${API_BASE}/anomaly/trigger`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ duration_seconds: durationSeconds }),
   });
 }
 
 export async function clearAnomaly(): Promise<void> {
-  await fetch(`${API_BASE}/anomaly/clear`, { method: "POST" });
+  await fetch(`${API_BASE}/anomaly/clear`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
 }
 
 export async function generateRCA(
@@ -156,7 +171,7 @@ export async function generateRCA(
 ): Promise<{ transaction_id: string; rca: string }> {
   const res = await fetch(`${API_BASE}/rca/generate`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ transaction_id: txnId }),
   });
   if (!res.ok) throw new Error("RCA generation failed");
