@@ -3,8 +3,13 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 aiosqlite
-aiofiles
+asyncpg
+psycopg2-binary
+gunicorn
 google-generativeai
 python-dotenv
 httpx
 pydantic
+slowapi
+tenacity
+aiofiles

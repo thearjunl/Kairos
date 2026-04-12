@@ -1,5 +1,5 @@
 """
-Database configuration — async SQLAlchemy with aiosqlite
+Database configuration — async SQLAlchemy with PostgreSQL (asyncpg) or SQLite (aiosqlite) fallback.
 """
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -10,7 +10,21 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./kairos.db")
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+# ─── Engine configuration with conditional pool settings ─────────────────────
+if "sqlite" in DATABASE_URL:
+    # SQLite: no connection pooling needed
+    engine = create_async_engine(DATABASE_URL, echo=False)
+else:
+    # PostgreSQL (asyncpg): production-grade pool settings
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_size=10,
+        max_overflow=20,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
+
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
