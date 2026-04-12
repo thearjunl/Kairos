@@ -1,18 +1,26 @@
 """
 Kairos — FastAPI Backend
 SSE streaming, anomaly injection, Gemini RCA, and observability metrics.
+Production-ready with rate limiting, API key auth, and global error handling.
 """
 import asyncio
 import json
+import os
 import time
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, Security, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
 from sqlalchemy import select, desc, func
+from dotenv import load_dotenv
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from database import init_db, async_session
 from models import Transaction, MetricsSnapshot
@@ -20,8 +28,24 @@ from simulator import generate_transaction, generate_seed_transactions, activate
 from metrics import get_aggregated_metrics
 from ai_triage import generate_rca
 
+load_dotenv()
+
 # ─── Startup time tracking ──────────────────────────────────────────────────
 _start_time = time.time()
+
+# ─── Rate Limiter ────────────────────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+
+# ─── API Key Auth ────────────────────────────────────────────────────────────
+API_KEY = os.getenv("API_SECRET_KEY")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(key: str = Security(api_key_header)):
+    """Verify API key for protected endpoints. Skipped if no key is configured."""
+    if API_KEY and key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    return key
 
 
 # ─── Lifespan ────────────────────────────────────────────────────────────────
@@ -60,14 +84,31 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# ─── CORS ────────────────────────────────────────────────────────────────────
+# ─── Rate limiter state ──────────────────────────────────────────────────────
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ─── CORS — Configurable origins ─────────────────────────────────────────────
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+
+# ─── Global Exception Handler ───────────────────────────────────────────────
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc) if os.getenv("APP_ENV") == "development" else "Contact support"
+        }
+    )
 
 
 # ─── Pydantic Models ────────────────────────────────────────────────────────
@@ -133,8 +174,9 @@ async def get_metrics():
 
 
 # ─── Anomaly Control ─────────────────────────────────────────────────────────
-@app.post("/anomaly/trigger")
-async def trigger_anomaly(body: AnomalyRequest):
+@app.post("/anomaly/trigger", dependencies=[Depends(verify_api_key)])
+@limiter.limit("5/minute")
+async def trigger_anomaly(request: Request, body: AnomalyRequest):
     """Activate anomaly mode for the simulator."""
     activate_anomaly(body.duration_seconds)
     return {
@@ -144,16 +186,17 @@ async def trigger_anomaly(body: AnomalyRequest):
     }
 
 
-@app.post("/anomaly/clear")
-async def clear_anomaly_endpoint():
+@app.post("/anomaly/clear", dependencies=[Depends(verify_api_key)])
+async def clear_anomaly_endpoint(request: Request):
     """Immediately clear anomaly mode."""
     clear_anomaly()
     return {"status": "normal", "message": "Anomaly mode cleared"}
 
 
 # ─── RCA Generation ─────────────────────────────────────────────────────────
-@app.post("/rca/generate")
-async def generate_rca_endpoint(body: RCARequest):
+@app.post("/rca/generate", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def generate_rca_endpoint(request: Request, body: RCARequest):
     """Generate AI-driven RCA for a failed transaction."""
     async with async_session() as session:
         stmt = select(Transaction).where(Transaction.transaction_id == body.transaction_id)
