@@ -18,7 +18,7 @@
 ![Kairos Dashboard](assets/dashboard_screenshot.png)
 
 
-<video src="https://raw.githubusercontent.com/thearjunl/Kairos/main/assets/demo.mp4" width="100%" autoplay loop muted playsinline></video>
+https://github.com/thearjunl/Kairos/raw/main/assets/demo.mp4
 
 > ⬆️ *Live dashboard demo — real-time transaction streaming, fault injection, and SLA monitoring*
 
