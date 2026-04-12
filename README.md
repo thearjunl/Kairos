@@ -18,9 +18,9 @@
 ![Kairos Dashboard](assets/dashboard_screenshot.png)
 
 
-https://github.com/thearjunl/Kairos/raw/main/assets/demo.mp4
 
-> ⬆️ *Live dashboard demo — real-time transaction streaming, fault injection, and SLA monitoring*
+
+
 
 </div>
 
@@ -248,53 +248,6 @@ Protected endpoints require `X-API-Key` header when `API_SECRET_KEY` is set.
 
 </details>
 
----
 
-## PROJECT CONTEXT
-### Why I Built This
-
-This project was built to demonstrate real-world cloud support and
-observability engineering skills relevant to fintech SaaS environments.
-The core problems it solves:
-
-- **Silent AI failures:** Transaction enrichment models can fail without
-  visible errors. Kairos makes every failure visible and immediately
-  actionable.
-- **Manual triage bottleneck:** L1 support analysts spend hours reading
-  raw logs to write RCA reports. Kairos automates this entirely with
-  Gemini AI, cutting triage time by 80%.
-- **SLA blindspots:** Without trend analysis, SLA breaches are only
-  discovered after they happen. Kairos predicts them before they occur.
-- **Compliance blindspots:** PII accidentally logged in transaction data
-  is a critical ISO 27001 risk. Kairos flags it in real time before it
-  becomes a breach.
-
-### Resume Bullets
-> - **Developed Kairos**, a cloud-native observability platform simulating
->   production fintech infrastructure (Azure/AWS/GCP) to monitor SLA
->   compliance across 10k+ transactions/min
-> - **Integrated Agentic AI** (Google Gemini) to automate L1 support
->   triage, reducing Root Cause Analysis time by 80% through automated
->   log interpretation and structured incident reporting
-> - **Implemented Real-time Data Pipelines** using Python SSE streams
->   and async SQLAlchemy to simulate high-throughput banking transaction
->   enrichment workflows
-> - **Designed for Compliance:** Built automated PII detection within
->   the logging pipeline adhering to ISO 27001 §A.18.1 standards,
->   with real-time security event flagging
-
----
-
-## FOOTER
-
-### License
-MIT License — see LICENSE file for details.
-
-### Author
-**[Your Name]**
-MCA Student | Cybersecurity Enthusiast | Full-Stack AI Developer
-[LinkedIn] [GitHub] [Email]
-
----
 
 *Built with obsession. Kairos — Know the critical moment before it passes.*
