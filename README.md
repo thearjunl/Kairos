@@ -15,7 +15,9 @@
 
 <br/>
 
-> 📸 *Dashboard screenshot — add after first deployment*
+![Kairos Dashboard](assets/dashboard_screenshot.png)
+
+![Kairos Demo](assets/demo.webp)
 
 </div>
 
