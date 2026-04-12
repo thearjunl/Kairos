@@ -7,8 +7,9 @@
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=nextdotjs)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Gemini AI](https://img.shields.io/badge/Gemini_AI-8E75B2?style=for-the-badge&logo=googlebard&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![MIT License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)
 
@@ -72,9 +73,10 @@ Backend:
 |---|---|---|
 | Framework | FastAPI | Async API + SSE streaming |
 | Language | Python 3.11+ | Backend logic |
-| Database | SQLite + SQLAlchemy (async) | Transaction + metrics storage |
+| Database | PostgreSQL + SQLAlchemy (async) | Transaction + metrics storage |
 | AI | Google Gemini (gemini-1.5-flash) | RCA generation |
-| Runtime | Uvicorn | ASGI server |
+| Runtime | Gunicorn + Uvicorn | Production ASGI server |
+| Auth | API Key + Rate Limiting | Endpoint protection |
 
 ---
 
@@ -93,7 +95,7 @@ Backend:
 │ Normal mode  │  /anomaly/trigger──► │ SLARiskPredictor  │
 │ Anomaly mode │  /security/events──► │ SecurityPanel     │
 │              │                      │                   │
-│              │  SQLite DB           │ useTransactionStream│
+│              │  PostgreSQL DB       │ useTransactionStream│
 │              │  (transactions +     │ (EventSource hook)│
 │              │   metrics_snapshot)  │                   │
 └──────────────┴──────────────────────┴───────────────────┘
@@ -108,6 +110,7 @@ Backend:
 ### Prerequisites
 - Node.js 18+
 - Python 3.11+
+- Docker & Docker Compose (recommended)
 - Google Gemini API key (free tier works)
   Get one at: https://makersuite.google.com/app/apikey
 
@@ -125,7 +128,16 @@ cd backend
 pip install -r requirements.txt
 cp ../.env.example .env
 # Add your GEMINI_API_KEY to .env
+```
+
+Development:
+```bash
 uvicorn main:app --reload --port 8000
+```
+
+Production:
+```bash
+bash start.sh
 ```
 
 Step 3 — Frontend setup (new terminal):
@@ -142,14 +154,70 @@ http://localhost:3000
 
 ---
 
+## DEPLOYMENT
+### Deployment
+
+#### Option A — Docker (Recommended)
+```bash
+# Build and run all services (PostgreSQL + Backend + Frontend)
+docker-compose up --build
+
+# Access dashboard
+http://localhost:3000
+```
+
+#### Option B — Cloud Deployment (Free Tier)
+
+| Service | Platform | Free Tier |
+|---------|----------|-----------|
+| Frontend | Vercel | Yes |
+| Backend | Render | Yes |
+| Database | Supabase (PostgreSQL) | Yes |
+
+**Frontend (Vercel):**
+1. Push repo to GitHub
+2. Import project at vercel.com
+3. Set root directory to `frontend`
+4. Set `NEXT_PUBLIC_API_URL` to your Render backend URL
+5. Deploy
+
+**Backend (Render):**
+1. Create new Web Service at render.com
+2. Connect GitHub repo, set root to `backend`
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `bash start.sh`
+5. Add all `.env` variables in Render dashboard
+
+**Database (Supabase):**
+1. Create project at supabase.com
+2. Copy the connection string (Session mode, port 5432)
+3. Set as `DATABASE_URL` in Render environment variables
+
+---
+
 ## ENVIRONMENT VARIABLES
 ### Environment Variables
 ```env
-# Kairos Environment Configuration
+# ─── Kairos Environment Configuration ───────────────────
+
+# Environment: development | staging | production
+APP_ENV=development
+
+# Database
+DATABASE_URL=postgresql+asyncpg://kairos_user:password@localhost:5432/kairos_db
+
+# AI
 GEMINI_API_KEY=your_gemini_api_key_here
-DATABASE_URL=sqlite:///./kairos.db
+
+# CORS (comma-separated, no spaces)
+ALLOWED_ORIGINS=http://localhost:3000
+
+# Server
+PORT=8000
 ANOMALY_DURATION_SECONDS=30
-NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# API Security
+API_SECRET_KEY=your_random_secret_key_here
 ```
 
 ---
@@ -160,16 +228,18 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 <details>
 <summary>View all API endpoints</summary>
 
-| Method | Endpoint | Description | Response |
-|---|---|---|---|
-| GET | `/stream` | SSE stream of live transactions | text/event-stream |
-| GET | `/metrics` | Aggregated metrics (last 100 txns) | JSON metrics object |
-| GET | `/incidents` | Last 20 failed transactions | Array of transactions |
-| GET | `/security/events` | PII + anomaly flagged transactions | Array of security events |
-| POST | `/rca/generate` | Generate AI RCA for a transaction | `{transaction_id, rca}` |
-| POST | `/anomaly/trigger` | Activate fault injection mode | `{status, duration}` |
-| POST | `/anomaly/clear` | Deactivate fault injection | `{status}` |
-| GET | `/health` | Service health check | `{status, uptime}` |
+| Method | Endpoint | Description | Auth | Response |
+|---|---|---|---|---|
+| GET | `/stream` | SSE stream of live transactions | No | text/event-stream |
+| GET | `/metrics` | Aggregated metrics (last 100 txns) | No | JSON metrics object |
+| GET | `/incidents` | Last 20 failed transactions | No | Array of transactions |
+| GET | `/security/events` | PII + anomaly flagged transactions | No | Array of security events |
+| POST | `/rca/generate` | Generate AI RCA for a transaction | 🔐 API Key | `{transaction_id, rca}` |
+| POST | `/anomaly/trigger` | Activate fault injection mode | 🔐 API Key | `{status, duration}` |
+| POST | `/anomaly/clear` | Deactivate fault injection | 🔐 API Key | `{status}` |
+| GET | `/health` | Service health check | No | `{status, uptime}` |
+
+Protected endpoints require `X-API-Key` header when `API_SECRET_KEY` is set.
 
 </details>
 
