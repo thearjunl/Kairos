@@ -121,7 +121,8 @@ class RCARequest(BaseModel):
 
 
 # ─── SSE Stream ──────────────────────────────────────────────────────────────
-@app.get("/stream")
+@app.get("/stream", dependencies=[Depends(verify_api_key)])
+@limiter.limit("60/minute")
 async def stream_transactions(request: Request):
     """Server-Sent Events endpoint — generates 1 transaction per 700ms."""
 
@@ -166,8 +167,9 @@ async def stream_transactions(request: Request):
 
 
 # ─── Metrics ─────────────────────────────────────────────────────────────────
-@app.get("/metrics")
-async def get_metrics():
+@app.get("/metrics", dependencies=[Depends(verify_api_key)])
+@limiter.limit("60/minute")
+async def get_metrics(request: Request):
     """Return aggregated metrics from last 100 transactions."""
     async with async_session() as session:
         return await get_aggregated_metrics(session)
@@ -231,8 +233,9 @@ async def generate_rca_endpoint(request: Request, body: RCARequest):
 
 
 # ─── Incidents ───────────────────────────────────────────────────────────────
-@app.get("/incidents")
-async def get_incidents():
+@app.get("/incidents", dependencies=[Depends(verify_api_key)])
+@limiter.limit("60/minute")
+async def get_incidents(request: Request):
     """Return last 20 failed transactions with RCA status."""
     async with async_session() as session:
         stmt = (
@@ -264,8 +267,9 @@ async def get_incidents():
 
 
 # ─── Security Events ────────────────────────────────────────────────────────
-@app.get("/security/events")
-async def get_security_events():
+@app.get("/security/events", dependencies=[Depends(verify_api_key)])
+@limiter.limit("60/minute")
+async def get_security_events(request: Request):
     """
     Return transactions with PII risk or suspicious patterns.
     Suspicious = >5 transactions from same region in 10s window.
