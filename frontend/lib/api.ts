@@ -3,8 +3,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const API_KEY = process.env.NEXT_PUBLIC_API_SECRET_KEY || "";
+// The backend URL is now fetched relative to Next.js host
+const API_BASE = "/api";
+// Note: We deliberately do NOT use NEXT_PUBLIC_API_SECRET_KEY to prevent
+// leaking the key to the browser. The Next.js API route handles the actual
+// attachment of the API key to backend requests.
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export interface Transaction {
@@ -60,13 +63,10 @@ export interface SecurityEvent {
 
 // ─── Auth Headers ───────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
+  // Proxy handles attaching the actual X-API-Key natively on backend
+  return {
     "Content-Type": "application/json",
   };
-  if (API_KEY) {
-    headers["X-API-Key"] = API_KEY;
-  }
-  return headers;
 }
 
 // ─── SSE Hook ───────────────────────────────────────────────────────────────
