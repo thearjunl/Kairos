@@ -49,14 +49,15 @@ prediction, compliance blind spots, and automated escalation workflows.
 
 | Feature | Description | Tech Used |
 |---|---|---|
-| Live Transaction Feed | Real-time stream of enriched banking transactions with merchant resolution, latency tracking, and SLA status | FastAPI SSE + Next.js EventSource |
-| AI Triage Agent | One-click Root Cause Analysis for failed transactions. Gemini AI generates RCA, business impact, and fix recommendation | Google Gemini API (gemini-1.5-flash) |
-| SLA Risk Predictor | Dynamic health score (0-100) with breach prediction. Switches between COMPLIANT, ELEVATED RISK, and BREACH IMMINENT states | Custom scoring algorithm |
-| Security Compliance | Auto-flags PII exposure in transaction logs and detects anomalous fraud patterns with ISO 27001 references | Pattern matching + heuristics |
-| Fault Injection | Inject simulated cloud incidents to test dashboard response. Shifts failure rate from 4% to 30% for 30 seconds | FastAPI background tasks |
-| Region Health Monitor | Per-region health bars for Azure, AWS, and GCP with real-time degradation detection | SQLAlchemy aggregations |
-| Latency Sparkline | Rolling 60-point latency chart with SLA threshold line at 200ms | Recharts AreaChart |
-| Metric KPIs | 5 live metric cards: Health Score, Success Rate, Avg Latency, SLA Breaches, Throughput | SSE + polling |
+| ChatOps Terminal | Conversational AI interface for live system interrogation. Query region health, SLAs, and failures | Google Gemini API + Framer Motion |
+| Service Topology Map | Interactive SVG-based microservice node graph with animated traffic flows | Custom SVG + Framer Motion |
+| Enhanced Anomaly Detection | Scans for latency spikes, error clustering, and failure rate bursts | Custom pattern algorithms |
+| Simulated Webhook Escalation | Discord/Slack-style webhook log for critical incident alerts | Internal event bus |
+| Command Palette (⌘K) | Spotlight search for navigation and fault injection | Keyboard events + Framer Motion |
+| Live Transaction Feed | Real-time stream of enriched banking transactions with merchant resolution | FastAPI SSE + Next.js EventSource |
+| AI Triage Agent | One-click Root Cause Analysis for failed transactions | Google Gemini API |
+| SLA Risk Predictor | Dynamic health score (0-100) with breach prediction | Custom scoring algorithm |
+| Fault Injection | Inject simulated cloud incidents to test dashboard response | FastAPI background tasks |
 
 ---
 
@@ -89,24 +90,24 @@ Backend:
 ### System Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│                      KAIROS                             │
-├──────────────┬──────────────────────┬───────────────────┤
-│   SIMULATOR  │     FASTAPI BACKEND  │  NEXT.JS FRONTEND │
-│              │                      │                   │
-│ Transaction  │  /stream (SSE)  ───► │ TransactionFeed   │
-│ Generator    │  /metrics       ───► │ MetricCards       │
-│              │  /rca/generate  ───► │ AITriagePanel     │
-│ Normal mode  │  /anomaly/trigger──► │ SLARiskPredictor  │
-│ Anomaly mode │  /security/events──► │ SecurityPanel     │
-│              │                      │                   │
-│              │  PostgreSQL DB       │ useTransactionStream│
-│              │  (transactions +     │ (EventSource hook)│
-│              │   metrics_snapshot)  │                   │
-└──────────────┴──────────────────────┴───────────────────┘
-                         │
-                   Gemini AI API
-                (RCA on failure events)
+┌──────────────────────────────────────────────────────────────┐
+│                           KAIROS V2.0                        │
+├──────────────┬───────────────────────────┬───────────────────┤
+│   SIMULATOR  │      FASTAPI BACKEND      │  NEXT.JS FRONTEND │
+│              │                           │                   │
+│ Transaction  │  /stream (SSE)      ───►  │ TransactionFeed   │
+│ Generator    │  /metrics           ───►  │ MetricCards       │
+│              │  /rca/generate      ───►  │ AITriagePanel     │
+│ Normal mode  │  /chat (ChatOps)    ───►  │ ChatOpsTerminal   │
+│ Anomaly mode │  /anomalies/detected───►  │ AnomalyAlerts     │
+│              │  /webhooks/log      ───►  │ WebhookLog        │
+│              │                           │                   │
+│              │  SQLite / PostgreSQL DB   │ CommandPalette    │
+│              │  (transactions & metrics) │ ServiceTopology   │
+└──────────────┴───────────────────────────┴───────────────────┘
+                          │
+                    Gemini AI API
+             (RCA generation & ChatOps)
 ```
 
 ---

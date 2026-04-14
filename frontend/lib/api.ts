@@ -177,3 +177,54 @@ export async function generateRCA(
   if (!res.ok) throw new Error("RCA generation failed");
   return res.json();
 }
+
+// ─── ChatOps ────────────────────────────────────────────────────────────────
+export interface ChatMessage {
+  role: "user" | "ai";
+  content: string;
+  timestamp: string;
+}
+
+export async function sendChatMessage(
+  message: string
+): Promise<{ response: string; context_used: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE}/chat`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) throw new Error("Chat request failed");
+  return res.json();
+}
+
+// ─── Anomaly Alerts ─────────────────────────────────────────────────────────
+export interface AnomalyAlert {
+  type: string;
+  severity: "warning" | "critical";
+  message: string;
+  affected_entity: string;
+  timestamp: string;
+}
+
+export async function fetchAnomalies(): Promise<AnomalyAlert[]> {
+  const res = await fetch(`${API_BASE}/anomalies/detected`);
+  if (!res.ok) throw new Error("Failed to fetch anomalies");
+  return res.json();
+}
+
+// ─── Webhook Log ────────────────────────────────────────────────────────────
+export interface WebhookEvent {
+  id: string;
+  event: string;
+  severity: string;
+  title: string;
+  channel: string;
+  status: "delivered" | "simulated";
+  timestamp: string;
+}
+
+export async function fetchWebhookLog(): Promise<WebhookEvent[]> {
+  const res = await fetch(`${API_BASE}/webhooks/log`);
+  if (!res.ok) throw new Error("Failed to fetch webhook log");
+  return res.json();
+}

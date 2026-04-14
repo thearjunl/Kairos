@@ -27,6 +27,9 @@ from models import Transaction, MetricsSnapshot
 from simulator import generate_transaction, generate_seed_transactions, activate_anomaly, clear_anomaly, is_anomaly_active
 from metrics import get_aggregated_metrics
 from ai_triage import generate_rca
+from chatops import chat_with_kairos
+from anomaly_detector import detect_anomalies
+from webhooks import webhook_simulator
 
 load_dotenv()
 
@@ -118,6 +121,10 @@ class AnomalyRequest(BaseModel):
 
 class RCARequest(BaseModel):
     transaction_id: str
+
+
+class ChatRequest(BaseModel):
+    message: str
 
 
 # ─── SSE Stream ──────────────────────────────────────────────────────────────
@@ -338,6 +345,37 @@ async def get_security_events(request: Request):
                 })
 
         return events
+
+
+# ─── ChatOps AI ──────────────────────────────────────────────────────────────
+@app.post("/chat", dependencies=[Depends(verify_api_key)])
+@limiter.limit("10/minute")
+async def chat_endpoint(request: Request, body: ChatRequest):
+    """Conversational AI interface — ask Kairos about the system state."""
+    async with async_session() as session:
+        result = await chat_with_kairos(body.message, session)
+        return result
+
+
+# ─── Anomaly Detection ───────────────────────────────────────────────────────
+@app.get("/anomalies/detected", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def get_detected_anomalies(request: Request):
+    """Run pattern-based anomaly detection on recent transactions."""
+    async with async_session() as session:
+        anomalies = await detect_anomalies(session)
+        # Auto-fire webhooks for critical anomalies
+        if anomalies:
+            webhook_simulator.fire_from_anomalies(anomalies)
+        return anomalies
+
+
+# ─── Webhook Log ─────────────────────────────────────────────────────────────
+@app.get("/webhooks/log", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def get_webhook_log(request: Request):
+    """Return the last 20 webhook escalation events."""
+    return webhook_simulator.get_log(20)
 
 
 # ─── Root ────────────────────────────────────────────────────────────────────

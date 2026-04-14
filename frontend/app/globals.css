@@ -141,3 +141,30 @@ body::before {
     opacity: 1;
   }
 }
+
+/* ─── Topology Edge Flow Animation ─── */
+@keyframes edgeFlow {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.topology-edge-flow {
+  animation: edgeFlow 1.5s linear infinite;
+}
+
+/* ─── Command Palette ─── */
+.command-palette-container {
+  background: rgba(17, 24, 32, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ─── Smooth scroll for section navigation ─── */
+html {
+  scroll-behavior: smooth;
+}
+

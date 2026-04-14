@@ -25,6 +25,11 @@ import TransactionFeed from "@/components/TransactionFeed";
 import SLARiskPredictor from "@/components/SLARiskPredictor";
 import AITriagePanel from "@/components/AITriagePanel";
 import SecurityCompliance from "@/components/SecurityCompliance";
+import ServiceTopology from "@/components/ServiceTopology";
+import ChatOpsTerminal from "@/components/ChatOpsTerminal";
+import CommandPalette from "@/components/CommandPalette";
+import AnomalyAlerts from "@/components/AnomalyAlerts";
+import WebhookLog from "@/components/WebhookLog";
 
 export default function Dashboard() {
   const [paused, setPaused] = useState(false);
@@ -132,6 +137,14 @@ export default function Dashboard() {
       }))
     : [];
 
+  // Command palette handlers
+  const handleNavigate = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <div className="min-h-screen p-3 md:p-4 lg:p-5 space-y-4">
       {/* ─── Top Bar ──────────────────────────────────────────────────── */}
@@ -147,7 +160,7 @@ export default function Dashboard() {
               <span className="text-s-text">ROS</span>
             </h1>
             <p className="text-[9px] text-s-muted font-mono uppercase tracking-[0.15em]">
-              Observability Platform
+              Observability Platform v2.0
             </p>
           </div>
         </div>
@@ -171,6 +184,16 @@ export default function Dashboard() {
 
         {/* Controls */}
         <div className="flex items-center gap-3">
+          {/* Command Palette trigger */}
+          <CommandPalette
+            onNavigate={handleNavigate}
+            onInjectFault={handleInjectFault}
+            onClearFault={handleClearFault}
+            onTogglePause={() => setPaused(!paused)}
+            isPaused={paused}
+            faultActive={faultActive}
+          />
+
           {/* Connection status */}
           <div
             className={`flex items-center gap-1.5 text-[10px] font-mono ${
@@ -229,28 +252,40 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* ─── Anomaly Alerts Bar ────────────────────────────────────────── */}
+      <AnomalyAlerts />
+
       {/* ─── Metrics Row ──────────────────────────────────────────────── */}
       <MetricCards metrics={metrics} />
 
+      {/* ─── Service Topology ─────────────────────────────────────────── */}
+      <ServiceTopology metrics={metrics} faultActive={faultActive} />
+
       {/* ─── Main Grid: Feed + SLA ────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-4">
+      <div id="feed" className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-4">
         <TransactionFeed transactions={transactions} />
         <SLARiskPredictor metrics={metrics} />
       </div>
 
-      {/* ─── Bottom Grid: AI Triage + Security ────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* ─── Bottom Grid: AI Triage + Security + Webhook Log ──────────── */}
+      <div id="triage" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <AITriagePanel
           incidents={incidents}
           onRcaGenerated={pollIncidents}
         />
-        <SecurityCompliance events={securityEvents} />
+        <div id="security">
+          <SecurityCompliance events={securityEvents} />
+        </div>
+        <WebhookLog />
       </div>
+
+      {/* ─── ChatOps Terminal ─────────────────────────────────────────── */}
+      <ChatOpsTerminal />
 
       {/* ─── Footer ──────────────────────────────────────────────────── */}
       <footer className="text-center text-[10px] text-s-muted/50 py-2 font-mono">
-        Kairos v1.0 · Know the critical moment before it passes. · Portfolio
-        Project
+        Kairos v2.0 · Know the critical moment before it passes. · ⌘K for
+        commands
       </footer>
     </div>
   );
