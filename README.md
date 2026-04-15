@@ -13,12 +13,12 @@
 ![MIT License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)
 
-<br/>
+<br/> 
 
 ![Kairos Dashboard](assets/dashboard_screenshot.png)
 
-
-
+  
+ 
  
 
 
