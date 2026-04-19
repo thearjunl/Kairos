@@ -1,7 +1,7 @@
 <div align="center">
   
 # KAIROS
-     
+       
 *Know the critical moment before it passes.*
 
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=nextdotjs)
